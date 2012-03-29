@@ -1,73 +1,72 @@
 inherit @module@;
 
-/*! filename:
- *! start:
- *! step:
- *! DS: array( mapping( name: ,DST: [GAUGE|COUNTER|DERIVE|ABSOLUTE],
-			  heartbeat: , min: , max: ) )
- *! RRA: array( mapping( CF: [AVERAGE|MIN|MAX|LAST], xff: , steps: , rows: ) )
+#define REQUIRE(X,Y,Z) do{if(!has_index(X,Y))throw(throw(Error.Generic("Public.Tools.RRDtool.rrdtool_create: " + Z + " must specify " + Y + ".\n"));}while(0);
+
+/*! @param filename
+ *!   path to new RRD to create.
+ *! @param start
+ *!   unix time integer for first entry (defaults to NOW)
+ *! @param step
+ *!   length, in seconds, of each sample period. Defaults to 300 (5 minutes)
+ *! 
+ *! @param DS
+ *!    array( mapping( name: ,DST: [GAUGE|COUNTER|DERIVE|ABSOLUTE],
+ *!			  heartbeat: , min: , max: ) )
+ *! @param RRA
+ *!    array( mapping( CF: [AVERAGE|MIN|MAX|LAST], xff: , steps: , rows: ) )
  */ 
 int rrdtool_create(string filename, array DS, array RRA, array|void options) {
   if (sizeof(DS)<1)
-    return -1;
+    throw(Error.Generic("Public.Tools.RRDtool.rrdtool_create: at least one datasource must be specified.\n"));
   if (sizeof(RRA)<1)
-    return -1;
-  array os=({ "create" });
-  os+=({ filename });
-  if (!zero_type(options))
-    os+=options;
-  os+=DS;
-  os+=RRA;
+    throw(Error.Generic("Public.Tools.RRDtool.rrdtool_create: at least one round-robin archive must be specified.\n"));
 
-/*
+  array newDS, newRRA;
+  array os = ({});
+
   foreach (DS; int ind; mapping vals) {
     string res="";
-    if (!has_index(vals,"name"))
-      return -1;
-    if (!has_index(vals,"DST"))
-      return -1;
+
+    REQUIRE(vals, "name", "datasource");
+    REQUIRE(vals, "DST", "datasource");
+    REQUIRE(vals, "heartbeat", "datasource");
+    REQUIRE(vals, "min", "datasource");
+    REQUIRE(vals, "max", "datasource");
+
     if (!has_value( ({ "GAUGE","COUNTER","ABSOLUTE","DERIVE" }),vals->DST))
-      return -1;
-    if (!has_index(vals,"heartbeat"))
-      return -1;
-    if (!has_index(vals,"min"))
-      return -1;
-    if (!has_index(vals,"max"))
-      return -1;
+      throw(Error.Generic("Public.Tools.RRDtool.rrdtool_create: datasource specifies invalid datatype.\n"));;
+
     res=sprintf("DS:%s:%s:%d:%s:%s",vals->name,vals->DST,vals->heartbeat,
 		(string)vals->min,(string)vals->max);
     os+=({ res });
   }
+
+  newDS = os;
+  os = ({});
+
   foreach (RRA; int ind; mapping vals) {
     string res="";
-    if (!has_index(vals,"CF"))
-      return -1;
+    REQUIRE(vals, "CF", "round-robin archive");
+
     if (!has_value( ({ "AVERAGE","MIN","MAX","LAST","HWPREDICT","SEASONAL",
 			"DEVSEASONAL","DEVPREDICT","FAILURES" }),vals->CF))
-      return -1;
+      throw(Error.Generic("Public.Tools.RRDtool.rrdtool_create: round-robin archive specifies invalid transform type.\n"));;
     switch (vals->CF) {
       case "AVERAGE":
       case "MIN":
       case "MAX":
       case "LAST":
-	if (!has_index(vals,"xff"))
-	  return -1;
-	if (!has_index(vals,"step"))
-	  return -1;
-	if (!has_index(vals,"rows"))
-	  return -1;
+        REQUIRE(vals, "xff", "round-robin archive");
+        REQUIRE(vals, "step", "round-robin archive");
+        REQUIRE(vals, "rows", "round-robin archive");
 	res=sprintf("RRA:%s:%f:%d:%d",vals->CF,vals->xff,vals->step,vals->rows);
 	os+=({ res });
 	break;
       case "HWPREDICT":
-	if (!has_index(vals,"rows"))
-	  return -1;
-	if (!has_index(vals,"alpha"))
-	  return -1;
-	if (!has_index(vals,"beta"))
-	  return -1;
-	if (!has_index(vals,"period"))
-	  return -1;
+        REQUIRE(vals, "rows", "round-robin archive");
+        REQUIRE(vals, "alpha", "round-robin archive");
+        REQUIRE(vals, "beta", "round-robin archive");
+        REQUIRE(vals, "period", "round-robin archive");
 	res=sprintf("RRA:%s:%f:%f:%d",vals->CF,vals->rows,vals->alpha,vals->beta,vals->period);
 	if (has_index(vals,"rranum"))
 	  res=sprintf("%s:%d",res,vals->rranum);
@@ -75,38 +74,48 @@ int rrdtool_create(string filename, array DS, array RRA, array|void options) {
 	break;
       case "SEASONAL":
       case "DEVSEASONAL":
-	if (!has_index(vals,"period"))
-	  return -1;
-	if (!has_index(vals,"gamma"))
-	  return -1;
-	if (!has_index(vals,"rranum"))
-	  return -1;
+        REQUIRE(vals, "period", "round-robin archive");
+        REQUIRE(vals, "gamma", "round-robin archive");
+        REQUIRE(vals, "rranum", "round-robin archive");
 	res=sprintf("RRA:%s:%d:%f:%d",vals->CF,vals->period,vals->gamma,vals->rranum);
 	os+=({ res });
 	break;
       case "DEVPREDICT":
-	if (!has_index(vals,"rows"))
-	  return -1;
-	if (!has_index(vals,"rranum"))
-	  return -1;
+        REQUIRE(vals, "rows", "round-robin archive");
+        REQUIRE(vals, "rranum", "round-robin archive");
 	res=sprintf("RRA:%s:%d:%d",vals->CF,vals->rows,vals->rranum);
 	os+=({ res });
 	break;
       case "FAILURES":
-	if (!has_index(vals,"rows"))
-	  return -1;
-	if (!has_index(vals,"threshold"))
-	  return -1;
-	if (!has_index(vals,"winlen"))
-	  return -1;
-	if (!has_index(vals,"rranum"))
+        REQUIRE(vals, "rows", "round-robin archive");
+        REQUIRE(vals, "threshold", "round-robin archive");
+        REQUIRE(vals, "winlen", "round-robin archive");
+        REQUIRE(vals, "rranum", "round-robin archive");
 	res+=sprintf("RRA:%s:%d:%d:%d:%d",vals->CF,vals->rows,vals->threshold,vals->winlen,vals->rranum);
 	os+=({ res });
 	break;
     }
   }
-*/
-//  werror("os==%O\n",os);
+
+  newRRA = os;
+
+  return low_rrd_create(filename, newDS, newRRA, options);
+}
+
+//!
+int low_rrdtool_create(string filename, array DS, array RRA, array|void options) {
+  if (sizeof(DS)<1)
+    throw(Error.Generic("Public.Tools.RRDtool.low_rrdtool_create: at least one datasource must be specified.\n"));
+  if (sizeof(RRA)<1)
+    throw(Error.Generic("Public.Tools.RRDtool.low_rrdtool_create: at least one round-robin archive must be specified.\n"));
+  array os=({ "create" });
+  os+=({ filename });
+  if (!zero_type(options))
+    os+=options;
+  os+=DS;
+  os+=RRA;
+
+  werror("os==%O\n",os);
   int res=rrd_create(sizeof(os),os);
   return res;
 }
