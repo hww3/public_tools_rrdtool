@@ -1,0 +1,12 @@
+@make_variables@
+VPATH=@srcdir@
+OBJS=rrd.o
+MODULE_LDFLAGS=@LDFLAGS@ @LIBS@
+MODDIR=Public.pmod/Tools.pmod/
+MODULE_PMOD_IN=module.pmod.in
+MODNAME=RRDtool
+
+CONFIG_HEADERS=@CONFIG_HEADERS@
+
+@dynamic_module_makefile@
+@dependencies@

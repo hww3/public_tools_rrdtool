@@ -1,0 +1,181 @@
+inherit @module@;
+
+/*! filename:
+ *! start:
+ *! step:
+ *! DS: array( mapping( name: ,DST: [GAUGE|COUNTER|DERIVE|ABSOLUTE],
+			  heartbeat: , min: , max: ) )
+ *! RRA: array( mapping( CF: [AVERAGE|MIN|MAX|LAST], xff: , steps: , rows: ) )
+ */ 
+int rrdtool_create(string filename, array DS, array RRA, array|void options) {
+  if (sizeof(DS)<1)
+    return -1;
+  if (sizeof(RRA)<1)
+    return -1;
+  array os=({ "create" });
+  os+=({ filename });
+  if (!zero_type(options))
+    os+=options;
+  os+=DS;
+  os+=RRA;
+
+/*
+  foreach (DS; int ind; mapping vals) {
+    string res="";
+    if (!has_index(vals,"name"))
+      return -1;
+    if (!has_index(vals,"DST"))
+      return -1;
+    if (!has_value( ({ "GAUGE","COUNTER","ABSOLUTE","DERIVE" }),vals->DST))
+      return -1;
+    if (!has_index(vals,"heartbeat"))
+      return -1;
+    if (!has_index(vals,"min"))
+      return -1;
+    if (!has_index(vals,"max"))
+      return -1;
+    res=sprintf("DS:%s:%s:%d:%s:%s",vals->name,vals->DST,vals->heartbeat,
+		(string)vals->min,(string)vals->max);
+    os+=({ res });
+  }
+  foreach (RRA; int ind; mapping vals) {
+    string res="";
+    if (!has_index(vals,"CF"))
+      return -1;
+    if (!has_value( ({ "AVERAGE","MIN","MAX","LAST","HWPREDICT","SEASONAL",
+			"DEVSEASONAL","DEVPREDICT","FAILURES" }),vals->CF))
+      return -1;
+    switch (vals->CF) {
+      case "AVERAGE":
+      case "MIN":
+      case "MAX":
+      case "LAST":
+	if (!has_index(vals,"xff"))
+	  return -1;
+	if (!has_index(vals,"step"))
+	  return -1;
+	if (!has_index(vals,"rows"))
+	  return -1;
+	res=sprintf("RRA:%s:%f:%d:%d",vals->CF,vals->xff,vals->step,vals->rows);
+	os+=({ res });
+	break;
+      case "HWPREDICT":
+	if (!has_index(vals,"rows"))
+	  return -1;
+	if (!has_index(vals,"alpha"))
+	  return -1;
+	if (!has_index(vals,"beta"))
+	  return -1;
+	if (!has_index(vals,"period"))
+	  return -1;
+	res=sprintf("RRA:%s:%f:%f:%d",vals->CF,vals->rows,vals->alpha,vals->beta,vals->period);
+	if (has_index(vals,"rranum"))
+	  res=sprintf("%s:%d",res,vals->rranum);
+	os+=({ res });
+	break;
+      case "SEASONAL":
+      case "DEVSEASONAL":
+	if (!has_index(vals,"period"))
+	  return -1;
+	if (!has_index(vals,"gamma"))
+	  return -1;
+	if (!has_index(vals,"rranum"))
+	  return -1;
+	res=sprintf("RRA:%s:%d:%f:%d",vals->CF,vals->period,vals->gamma,vals->rranum);
+	os+=({ res });
+	break;
+      case "DEVPREDICT":
+	if (!has_index(vals,"rows"))
+	  return -1;
+	if (!has_index(vals,"rranum"))
+	  return -1;
+	res=sprintf("RRA:%s:%d:%d",vals->CF,vals->rows,vals->rranum);
+	os+=({ res });
+	break;
+      case "FAILURES":
+	if (!has_index(vals,"rows"))
+	  return -1;
+	if (!has_index(vals,"threshold"))
+	  return -1;
+	if (!has_index(vals,"winlen"))
+	  return -1;
+	if (!has_index(vals,"rranum"))
+	res+=sprintf("RRA:%s:%d:%d:%d:%d",vals->CF,vals->rows,vals->threshold,vals->winlen,vals->rranum);
+	os+=({ res });
+	break;
+    }
+  }
+*/
+//  werror("os==%O\n",os);
+  int res=rrd_create(sizeof(os),os);
+  return res;
+}
+
+void dump() {
+}
+
+mapping fetch(string filename, string CF, int|void res,
+	    string|void start, string|void end) {
+  array os=({ "fetch" });
+  os+=({ filename });
+  if (!has_value(({ "AVERAGE","MIN","MAX","LAST" }),CF))
+    return ([]);
+  os+=({ CF });
+  if (!zero_type(start)) {
+    os+=({ "--start" });
+    os+=({ start });
+  }
+  if (!zero_type(end)) {
+    os+=({ "--end" });
+    os+=({ end });
+  }
+  mapping m=rrd_fetch(sizeof(os),os);
+  return m;
+}
+
+int first(string filename, int|void rraindex) {
+  array os=({ "first" });
+  os+=({ filename });
+  if (!zero_type(rraindex)) {
+    os+=({ "--rraindex" });
+    os+=({ rraindex });
+  }
+  return rrd_first(sizeof(os),os);
+}
+
+int graph(string outputfile, array DEFs,
+	   array|void options) {
+  array os=({ "graph" });
+  os+=({ outputfile });
+  if (!zero_type(options))
+    os+=options;
+  os+=DEFs;
+  int k=rrd_graph(sizeof(os),os);
+  return k;
+}
+
+int last(string filename) {
+  array os=({ "last" });
+  os+=({ filename });
+  return rrd_last(sizeof(os),os);
+}
+
+void resize(array opts) {
+}
+
+void restore(array opts) {
+}
+
+void tune(array opts) {
+}
+
+int update(string filename, array vals) {
+  array os=({ "update" });
+  os+=({ filename });
+  os+=vals;
+  return rrd_update(sizeof(os),os);
+}
+
+void xport(array opts) {
+}
+

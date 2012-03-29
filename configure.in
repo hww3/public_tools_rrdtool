@@ -1,0 +1,12 @@
+AC_INIT()
+AC_CONFIG_HEADER(config.h)
+
+AC_MODULE_INIT()
+
+AC_HEADER_STDC
+
+AC_CHECK_HEADERS( rrd.h )
+
+AC_CHECK_LIB(rrd, rrd_create,	[ LIBS="${LIBS-} -lrrd" ])
+
+AC_OUTPUT(Makefile)
