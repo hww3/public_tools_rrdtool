@@ -1,0 +1,13 @@
+
+Public.Tools.RRDtool.rrdtool_create("station_" + station_id + ".rrd", 
+  ({(["name": "tempa", "DST": "GAUGE", "heartbeat": 600, "min": "U", "max": "U"])}), 
+  ({
+    (["CF": "AVERAGE", "xff": 0.5, "step": 1, "rows": 12*60]), 
+    (["CF": "AVERAGE", "xff": 0.001, "step": 12*5, "rows": 12*24*30])
+  }), 
+  ({"--start", time(), "--step", 5}) 
+);
+
+Public.Tools.RRDtool.rrd_update(3, ({"update", "foo.rrd", "N:22"}));
+
+Public.Tools.RRDtool.fetch("../wx/wxd/station_3.rrd", "AVERAGE", 300, "noon","-1h")
