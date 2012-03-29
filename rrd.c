@@ -65,10 +65,17 @@ void f_rrd_fetch(INT32 args) {
       if ((ITEM(a)+i)->type==PIKE_T_INT) {
 	argv[j]=xmalloc(sizeof(char)*33);
 	sprintf(argv[j],"%d",(ITEM(a)+i)->u.integer);
+        //printf("arg %d: %s\n", j, argv[j]);
 	j++;
       }
-      if ((ITEM(a)+i)->type==PIKE_T_STRING)
-	argv[j++]=strdup((ITEM(a)+i)->u.string->str);
+      else if ((ITEM(a)+i)->type==PIKE_T_STRING)
+      {
+	argv[j]=strndup((ITEM(a)+i)->u.string->str,(ITEM(a)+i)->u.string->len);
+        //printf("arg %d: %s\n", j, argv[j]);
+        j++;
+      }
+      else
+         Pike_error("invalid argument type.\n");
     }
     k=rrd_fetch(j,argv,&start,&end,&step,&ds_cnt,&ds_namv,&data);
     for (i=0; i<j; i++)
@@ -76,13 +83,27 @@ void f_rrd_fetch(INT32 args) {
     xfree(argv);
   }
   pop_n_elems(args);
+
+  if(k!=0) 
+  {
+    Pike_error("rrd_fetch failed.\n");
+  }
+
   push_text("end");
   push_int(end);
+  push_text("start");
+  push_int(start);
   push_text("step");
   push_int(step);
   push_text("fields");
   for (i=0; i<ds_cnt; i++) {
     struct pike_string *pk;
+if(!ds_namv[i])
+{
+ //printf("yikes!\n"); 
+ continue;
+}
+//printf("field %d: %s\n",i, ds_namv[i]);
     push_string(make_shared_binary_string(ds_namv[i],strlen(ds_namv[i])));
   }
   f_aggregate(ds_cnt);
@@ -97,7 +118,8 @@ void f_rrd_fetch(INT32 args) {
     }
   }
   f_aggregate((end-start)/step);
-  f_aggregate_mapping(8);
+  f_aggregate_mapping(10);
+
   for (i=0; i<ds_cnt; i++)
     free(ds_namv[i]);
   free(ds_namv);

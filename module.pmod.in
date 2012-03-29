@@ -130,10 +130,17 @@ mapping fetch(string filename, string CF, int|void res,
   if (!has_value(({ "AVERAGE","MIN","MAX","LAST" }),CF))
     return ([]);
   os+=({ CF });
+
   if (!zero_type(start)) {
     os+=({ "--start" });
     os+=({ start });
   }
+
+  if (!zero_type(res)) {
+    os+=({ "--resolution" });
+    os+=({ res });
+  }
+
   if (!zero_type(end)) {
     os+=({ "--end" });
     os+=({ end });
