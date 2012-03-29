@@ -1,6 +1,6 @@
 inherit @module@;
 
-#define REQUIRE(X,Y,Z) do{if(!has_index(X,Y))throw(throw(Error.Generic("Public.Tools.RRDtool.rrdtool_create: " + Z + " must specify " + Y + ".\n"));}while(0);
+#define REQUIRE(X,Y,Z) do{if(!has_index(X,Y))throw(Error.Generic("Public.Tools.RRDtool.rrdtool_create: " + Z + " must specify " + Y + ".\n"));}while(0);
 
 /*! @param filename
  *!   path to new RRD to create.
@@ -67,7 +67,7 @@ int rrdtool_create(string filename, array DS, array RRA, array|void options) {
         REQUIRE(vals, "alpha", "round-robin archive");
         REQUIRE(vals, "beta", "round-robin archive");
         REQUIRE(vals, "period", "round-robin archive");
-	res=sprintf("RRA:%s:%f:%f:%d",vals->CF,vals->rows,vals->alpha,vals->beta,vals->period);
+	res=sprintf("RRA:%s:%f:%f:%f:%d",vals->CF,vals->rows,vals->alpha,vals->beta,vals->period);
 	if (has_index(vals,"rranum"))
 	  res=sprintf("%s:%d",res,vals->rranum);
 	os+=({ res });
@@ -99,7 +99,7 @@ int rrdtool_create(string filename, array DS, array RRA, array|void options) {
 
   newRRA = os;
 
-  return low_rrd_create(filename, newDS, newRRA, options);
+  return low_rrdtool_create(filename, newDS, newRRA, options);
 }
 
 //!
