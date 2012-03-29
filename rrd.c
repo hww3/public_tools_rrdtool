@@ -231,17 +231,12 @@ void f_rrd_update(INT32 args) {
 struct program *rrd_program;
 
 PIKE_MODULE_INIT {
-//  start_new_program();
-
   ADD_FUNCTION("rrd_create",f_rrd_create,tFunc(tInt tArray,tInt),0);
   ADD_FUNCTION("rrd_fetch",f_rrd_fetch,tFunc(tInt tArray,tMapping),0);
   ADD_FUNCTION("rrd_first",f_rrd_first,tFunc(tInt tArray,tInt),0);
   ADD_FUNCTION("rrd_last",f_rrd_last,tFunc(tInt tArray,tInt),0);
   ADD_FUNCTION("rrd_graph",f_rrd_graph,tFunc(tInt tArray,tInt),0);
   ADD_FUNCTION("rrd_update",f_rrd_update,tFunc(tInt tArray,tInt),0);
-
-//  rrd_program=end_program();
-//  add_program_constant("RRD",rrd_program,0);
 }
 
 PIKE_MODULE_EXIT {
